@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Predictive Threat Intelligence Using Machine Learning for CVE Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      background: linear-gradient(145deg, #0d1117, #161b22);
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      padding: 30px;
+      background: #0d1117;
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: #ffffff;
+      border-bottom: 2px solid #30363d;
+      box-shadow: 0 2px 10px #00000088;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      padding: 40px;
+    }
+    .card {
+      background-color: #161b22;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    h3 {
+      margin-top: 0;
+      color: #58a6ff;
+    }
+    .iframe-card iframe {
+      width: 100%;
+      height: 400px;
+      border: none;
+      border-radius: 15px;
+    }
+    .chart-card canvas {
+      width: 100% !important;
+      max-height: 400px;
+      border-radius: 15px;
+    }
+    .cve-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .cve-list li {
+      padding: 10px;
+      border-bottom: 1px solid #30363d;
+      font-size: 1rem;
+    }
+    .cve-id {
+      color: #ef4444;
+      font-weight: bold;
+    }
+    .cve-desc {
+      color: #94a3b8;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #cbd5e1;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+    }
+    th {
+      color: #facc15;
+    }
+
+/* Style the modal (background) */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      padding-top: 60px;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.9);
+    }
+
+    /* Modal content (image) */
+    .modal-content {
+      margin: auto;
+      display: block;
+      width: 90%;
+      max-width: 1000px;
+    }
+
+    /* Close button */
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: #fff;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Clickable thumbnail */
+    .thumbnail {
+      width: 90%;
+      max-width: 700px;
+      cursor: pointer;
+    }
+
+
+  </style>
+</head>
+<body>
+  <header>Predictive Threat Intelligence Using Machine Learning for CVE Analysis</header>
+  <div class="container">
+
+
+    <div class="card chart-card">
+      <h3>CVEs Severity Distribution</h3>
+      <canvas id="severityChart"></canvas>
+    </div>
+
+   
+
+    <div class="card chart-card">
+      <h3>Top Vulnerability Categories</h3>
+      <canvas id="categoryChart"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Top CVEs</h3>
+      <ul class="cve-list">
+        <li><span class="cve-id">CVE-2023-23397</span> — <span class="cve-desc">Microsoft Outlook privilege escalation via specially crafted email.</span></li>
+        <li><span class="cve-id">CVE-2023-34362</span> — <span class="cve-desc">MOVEit Transfer SQL injection vulnerability actively exploited.</span></li>
+        <li><span class="cve-id">CVE-2023-4863</span> — <span class="cve-desc">WebP image format buffer overflow impacting browsers and apps.</span></li>
+        <li><span class="cve-id">CVE-2023-28252</span> — <span class="cve-desc">Windows Common Log File System Driver vulnerability used in ransomware.</span></li>
+        <li><span class="cve-id">CVE-2024-0204</span> — <span class="cve-desc">Fortinet FortiOS & FortiProxy authentication bypass vulnerability.</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Prediction Table</h3>
+      <table>
+        <thead>
+          <tr><th>CVE ID</th><th>Report</th><th>AttackVector</th><th>AvailabilityImpact</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CVE-113194</td><td>Jitsi-2.10.5550 was discovered to contain a vu...</td><td>NETWORK</th><th>NONE</td></tr>
+          <tr><td>CVE-71868</td><td>Barco wePresent WiPG-1600W devices download co...</td><td>NETWORK</th><th></td>HIGH</tr>
+          <tr><td>CVE-87425</td><td>Multiple low security issues were discovered a...</td><td>NETWORK</th><th></td>HIGH</tr>
+          <tr><td>CVE-17918</td><td>ChakraCore and Microsoft Edge in Windows 10 15...</td><td>NETWORK</th><th></td>HIGH</tr>
+          <tr><td>CVE-91649</td><td>In Digi RealPort through 4.10.490, authenticat...</td><td>NETWORK</th><th></td>HIGH</tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+ 
+  <script>
+    // Severity Distribution Pie
+    new Chart(document.getElementById('severityChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Low', 'Medium', 'High', 'Critical'],
+        datasets: [{
+          data: [5, 15, 25, 10],
+          backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'top', labels: { color: '#c9d1d9' } },
+          title: { display: true, text: 'CVE Severity Distribution', color: '#c9d1d9' }
+        }
+      }
+    });
+
+
+
+    // Vulnerability Categories Bar
+    new Chart(document.getElementById('categoryChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        //labels: ['Cross-Site Scripting', 'SQL Injection', 'Information Disclosure ', 'Denial of Service','File Inclusion', 'Directory Traversal','Cross-Site Request Forgery'],
+        labels: ['XSS', 'SQLi', 'infor ', 'DoS', 'File Inclusion', 'dirtra', 'CSRF'],
+        datasets: [{
+          label: 'Number of CVEs',  
+          data: [20, 18, 16, 15, 14, 13, 12],
+          backgroundColor: '#facc15'
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Top CVE Categories', color: '#c9d1d9' }
+        },
+        scales: {
+          x: { ticks: { color: '#c9d1d9' } },
+          y: { ticks: { color: '#c9d1d9' } }
+        }
+      }
+    });
+  </script>
+  <center><h1></h1><center>
+ 
+    <!-- Thumbnail image -->
+<img src="Normalized_Confusion_Matrix_for_CVSSv3_Severity_Prediction.png" class="thumbnail" onclick="openModal(this.src)">
+
+<!-- The Modal -->
+<div id="myModal" class="modal" onclick="closeModal()">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <img class="modal-content" id="imgFull">
+</div>
+
+<script>
+  function openModal(src) {
+    document.getElementById("myModal").style.display = "block";
+    document.getElementById("imgFull").src = src;
+  }
+
+  function closeModal() {
+    document.getElementById("myModal").style.display = "none";
+  }
+ 
+       
+    <!-- Thumbnail image -->
+<img src="threat_confusion_matrix_final.png" class="thumbnail" onclick="openModal(this.src)">
+
+<!-- The Modal -->
+<div id="myModal" class="modal" onclick="closeModal()">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <img class="modal-content" id="imgFull">
+</div>
+
+<script>
+  function openModal(src) {
+    document.getElementById("myModal").style.display = "block";
+    document.getElementById("imgFull").src = src;
+  }
+
+  function closeModal() {
+    document.getElementById("myModal").style.display = "none";
+  }
+ 
+</script>    
+
+
+    <!-- Thumbnail image -->
+<img src="Threat_Density.png" class="thumbnail" onclick="openModal(this.src)">
+
+<!-- The Modal -->
+<div id="myModal" class="modal" onclick="closeModal()">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <img class="modal-content" id="imgFull">
+</div>
+
+<script>
+  function openModal(src) {
+    document.getElementById("myModal").style.display = "block";
+    document.getElementById("imgFull").src = src;
+  }
+
+  function closeModal() {
+    document.getElementById("myModal").style.display = "none";
+  }
+ 
+</script>  
+    <!-- Thumbnail image -->
+<img src="CVSSv3_Threat_Density.png" class="thumbnail" onclick="openModal(this.src)">
+
+<!-- The Modal -->
+<div id="myModal" class="modal" onclick="closeModal()">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <img class="modal-content" id="imgFull">
+</div>
+
+<script>
+  function openModal(src) {
+    document.getElementById("myModal").style.display = "block";
+    document.getElementById("imgFull").src = src;
+  }
+
+  function closeModal() {
+    document.getElementById("myModal").style.display = "none";
+  }
+ 
+</script> 
+</script>  
+    <!-- Thumbnail image -->
+<img src="threat_confusion_matrix_final.png" class="thumbnail" onclick="openModal(this.src)">
+
+<!-- The Modal -->
+<div id="myModal" class="modal" onclick="closeModal()">
+  <span class="close" onclick="closeModal()">&times;</span>
+  <img class="modal-content" id="imgFull">
+</div>
+
+<script>
+  function openModal(src) {
+    document.getElementById("myModal").style.display = "block";
+    document.getElementById("imgFull").src = src;
+  }
+
+  function closeModal() {
+    document.getElementById("myModal").style.display = "none";
+  }
+ 
+</script> 
+                
+</body>
+</body>
+</html>
